@@ -39,6 +39,8 @@ export type {
   FontsourceLoaderOptions,
 } from "./converter/nodes/text/primitives/font/loader";
 export { createFontsourceLoader } from "./converter/nodes/text/primitives/font/loader";
+export type { GradientBox } from "./converter/styles/gradient";
+export { cssBackgroundToFigmaPaints } from "./converter/styles/gradient";
 export type { ConvertTrace, TraceEntry } from "./converter/trace";
 export type { FigmaClipboard } from "./converter/types";
 export type { Classify, ConverterLayout } from "./converter/walk";

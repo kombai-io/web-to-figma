@@ -2,6 +2,7 @@ import type { Position } from "../../dom";
 import { createSolidPaint, cssColorToFigmaColor } from "../../styles/color";
 import { parseOpacity } from "../../styles/opacity";
 import type { FigmaBlob, FigmaGuid, FigmaVectorNodeChange } from "../../types";
+import { svgPaintServerToFigmaPaints } from "./paint-server";
 import { shapeToPath } from "./shapes";
 import { svgPathToVectorNetworkWithScaling } from "./vector-networks";
 import { vectorNetworkToBytes } from "./vector-networks/encoder";
@@ -274,7 +275,12 @@ export function elementToVectorNodeChange(
     strokeJoin: strokeLinejoin,
     strokePaints: strokeColor
       ? [createSolidPaint(strokeColor.color, strokeOpacity)]
-      : [],
+      : svgPaintServerToFigmaPaints(
+          element,
+          computedStyle.stroke,
+          { width, height },
+          strokeOpacity
+        ),
     dashPattern: strokeDasharray ?? [],
 
     /* Vector Data */
@@ -289,7 +295,12 @@ export function elementToVectorNodeChange(
     // /* Fill */
     fillPaints: fillColor
       ? [createSolidPaint(fillColor.color, fillOpacity)]
-      : [],
+      : svgPaintServerToFigmaPaints(
+          element,
+          computedStyle.fill,
+          { width, height },
+          fillOpacity
+        ),
 
     /* Other */
     horizontalConstraint: "SCALE",

@@ -587,7 +587,43 @@ function parseConicGradient(
 }
 
 /**
- * Converts a CSS background string to an array of FigmaPaint objects.
+ * Splits a background's layers at top-level commas, without treating commas
+ * inside colours, URLs, quoted strings or nested functions as separators.
+ */
+function splitBackgroundLayers(value: string): Array<string> {
+  const layers: Array<string> = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let start = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    const ch = value[i];
+    if (ch === "\\") {
+      i += 1;
+    } else if (quote) {
+      if (ch === quote) {
+        quote = null;
+      }
+    } else if (ch === "'" || ch === '"') {
+      quote = ch;
+    } else if (ch === "(") {
+      depth += 1;
+    } else if (ch === ")") {
+      depth -= 1;
+    } else if (ch === "," && depth === 0) {
+      layers.push(value.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  layers.push(value.slice(start).trim());
+  return layers.filter(Boolean);
+}
+
+/**
+ * Converts a CSS background string to an array of FigmaPaint objects, one per
+ * gradient layer. CSS lists the top layer first and Figma lists it last, so the
+ * order is reversed. Each layer is parsed on its own, so a URL following a
+ * gradient cannot turn into a spurious transparent colour stop. Layers that are
+ * not gradients (`url(…)`) produce no paint.
  * @param cssBackground - The string to convert.
  * @param box - The element's box in CSS pixels; sizes the linear gradient line.
  * @returns An array of FigmaPaint objects.
@@ -595,6 +631,15 @@ function parseConicGradient(
 export function cssBackgroundToFigmaPaints(
   cssBackground: string,
   box: GradientBox = DEFAULT_BOX
+): Array<FigmaPaint> {
+  return splitBackgroundLayers(cssBackground || "")
+    .reverse()
+    .flatMap((layer) => cssBackgroundLayerToFigmaPaints(layer, box));
+}
+
+function cssBackgroundLayerToFigmaPaints(
+  cssBackground: string,
+  box: GradientBox
 ): Array<FigmaPaint> {
   if (!cssBackground || cssBackground === "none") {
     return [];

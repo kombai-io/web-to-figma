@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { ConvertTrace } from "@figit/dom-to-figma";
 import { decodeFigmaData, parseClipboardHtml } from "@figit/fig-kiwi";
+import type { ConvertTrace } from "@kombai/dom-to-figma";
 import type { Browser, Page } from "playwright";
 import { chromium } from "playwright";
 import { buildConverterBundle } from "./bundle";

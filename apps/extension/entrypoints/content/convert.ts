@@ -1,9 +1,9 @@
-import type { Classify, FigmaConverter } from "@figit/dom-to-figma";
+import type { Classify, FigmaConverter } from "@kombai/dom-to-figma";
 import {
   createFigmaConverter,
   createFontsourceLoader,
   defaultClassify,
-} from "@figit/dom-to-figma";
+} from "@kombai/dom-to-figma";
 import { toast } from "sonner";
 
 import { toErrorMessage } from "../../shared/errors";

@@ -1,4 +1,4 @@
-import type { ConvertTrace } from "@figit/dom-to-figma";
+import type { ConvertTrace } from "@kombai/dom-to-figma";
 import { describe, expect, it } from "vitest";
 import type { GroundTruthElement } from "./ground-truth";
 import type { PayloadNode } from "./tier0";

@@ -50,12 +50,12 @@ importers:
 
   apps/extension:
     dependencies:
-      '@figit/dom-to-figma':
-        specifier: workspace:*
-        version: link:../../packages/dom-to-figma
       '@figit/ui':
         specifier: workspace:*
         version: link:../../internal/ui
+      '@kombai/dom-to-figma':
+        specifier: workspace:*
+        version: link:../../packages/dom-to-figma
       '@phosphor-icons/react':
         specifier: 2.1.10
         version: 2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -99,12 +99,12 @@ importers:
       '@codemirror/lang-html':
         specifier: ^6.4.10
         version: 6.4.11
-      '@figit/dom-to-figma':
-        specifier: workspace:*
-        version: link:../../packages/dom-to-figma
       '@figit/ui':
         specifier: workspace:*
         version: link:../../internal/ui
+      '@kombai/dom-to-figma':
+        specifier: workspace:*
+        version: link:../../packages/dom-to-figma
       '@tanstack/react-router':
         specifier: ^1.169.2
         version: 1.169.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -148,12 +148,12 @@ importers:
 
   internal/oracle-harness:
     dependencies:
-      '@figit/dom-to-figma':
-        specifier: workspace:*
-        version: link:../../packages/dom-to-figma
       '@figit/fig-kiwi':
         specifier: workspace:*
         version: link:../../packages/fig-kiwi
+      '@kombai/dom-to-figma':
+        specifier: workspace:*
+        version: link:../../packages/dom-to-figma
       pixelmatch:
         specifier: ^6.0.0
         version: 6.0.0

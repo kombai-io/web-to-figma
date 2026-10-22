@@ -1,5 +1,5 @@
-import type { ConverterLayout } from "@figit/dom-to-figma";
-import { createFigmaConverter } from "@figit/dom-to-figma";
+import type { ConverterLayout } from "@kombai/dom-to-figma";
+import { createFigmaConverter } from "@kombai/dom-to-figma";
 
 // One converter instance per layout mode so the in-memory font/image caches
 // stay warm across re-runs while the user iterates on a scene and toggles

@@ -136,7 +136,7 @@ prose alone is not enough:
       "note": "one line: what was wrong and what fixed it"
     }
   ],
-  "changedPackages": ["@figit/dom-to-figma"]
+  "changedPackages": ["@kombai/dom-to-figma"]
 }
 ```
 

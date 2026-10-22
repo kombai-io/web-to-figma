@@ -1,5 +1,6 @@
 {
   "name": "@figit/fig-kiwi",
+  "private": true,
   "version": "0.2.0",
   "description": "Encode Figma's Kiwi binary format and HTML clipboard envelope.",
   "license": "MIT",

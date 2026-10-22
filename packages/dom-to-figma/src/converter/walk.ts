@@ -277,6 +277,12 @@ async function renderTextNode(
   if (!textNode.parentElement) {
     return 0;
   }
+  // `visibility` is inherited and a visible descendant can override it, so a
+  // hidden ancestor's frame is kept and only the text it holds is left out.
+  const visibility = window.getComputedStyle(textNode.parentElement).visibility;
+  if (visibility === "hidden" || visibility === "collapse") {
+    return 0;
+  }
 
   // A text node that continues a sibling's line and wraps cannot be one
   // Figma text box (its indented first line isn't representable): emit one

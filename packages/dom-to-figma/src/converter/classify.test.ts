@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
-import { defaultClassify } from "./classify";
+import { defaultClassify, formDisplayText } from "./classify";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -81,5 +81,64 @@ describe("defaultClassify", () => {
 
   it("falls back to frame for an empty div", () => {
     expect(defaultClassify(make("div"))).toBe("frame");
+  });
+
+  it("skips SVG elements that are only referenced, whatever their case", () => {
+    for (const tag of [
+      "clipPath",
+      "mask",
+      "symbol",
+      "pattern",
+      "marker",
+      "linearGradient",
+      "radialGradient",
+      "filter",
+    ]) {
+      expect(defaultClassify(makeSvg(tag))).toBe("skip");
+    }
+  });
+
+  it("does not treat an HTML element named like an SVG shape as a vector", () => {
+    expect(defaultClassify(make("rect"))).not.toBe("vector");
+    expect(defaultClassify(make("mask"))).not.toBe("skip");
+  });
+
+  it("classifies a text field holding a value, with no placeholder, as form-with-placeholder", () => {
+    const input = make("input") as HTMLInputElement;
+    input.value = "ada@example.com";
+    expect(defaultClassify(input)).toBe("form-with-placeholder");
+  });
+
+  it("does not treat a slider or colour picker's value as text", () => {
+    for (const type of ["range", "color"]) {
+      const input = make("input", { type }) as HTMLInputElement;
+      expect(defaultClassify(input)).toBe("frame");
+    }
+  });
+});
+
+describe("formDisplayText", () => {
+  it("prefers the value, then the placeholder", () => {
+    const input = make("input", { placeholder: "Email" }) as HTMLInputElement;
+    expect(formDisplayText(input)).toEqual({
+      text: "Email",
+      placeholder: true,
+    });
+    input.value = "ada@example.com";
+    expect(formDisplayText(input)).toEqual({
+      text: "ada@example.com",
+      placeholder: false,
+    });
+  });
+
+  it("masks a password value", () => {
+    const input = make("input", { type: "password" }) as HTMLInputElement;
+    input.value = "hunter2";
+    expect(formDisplayText(input)?.text).toBe("\u2022".repeat(7));
+  });
+
+  it("returns null for a field with nothing to show", () => {
+    expect(formDisplayText(make("input"))).toBeNull();
+    expect(formDisplayText(make("input", { placeholder: "  " }))).toBeNull();
   });
 });

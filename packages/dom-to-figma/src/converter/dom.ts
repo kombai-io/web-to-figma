@@ -117,6 +117,11 @@ export function splitMidLineWrappedText(
   if (!relativeTo || content.trim().length === 0) {
     return null;
   }
+  // Only text in inline flow can start mid-line. A flex or grid item starts its own block even when
+  // a sibling beside it overlaps its first line; split, its lines sat side by side in auto layout.
+  if (!flowsInline(textNode, siblingContext, relativeTo)) {
+    return null;
+  }
 
   const range = doc.createRange();
   range.selectNodeContents(textNode);
@@ -186,6 +191,37 @@ export function splitMidLineWrappedText(
   return segments.length >= 2 ? segments : null;
 }
 
+/**
+ * Whether text can continue a line another node started: its element (when it
+ * has its own) is `display: inline`, and the box laying it out is not a flex or
+ * grid container, whose children — bare text included, as an anonymous item —
+ * are blockified.
+ */
+function flowsInline(
+  textNode: Text,
+  siblingContext: Node,
+  relativeTo: Element
+): boolean {
+  const view = textNode.ownerDocument?.defaultView ?? window;
+  if (
+    siblingContext !== textNode &&
+    isElementNode(siblingContext) &&
+    view.getComputedStyle(siblingContext).display !== "inline"
+  ) {
+    return false;
+  }
+  let container: Element | null = relativeTo;
+  while (container && view.getComputedStyle(container).display === "contents") {
+    container = container.parentElement;
+  }
+  if (!container) {
+    return true;
+  }
+  return !FLEX_OR_GRID_DISPLAY.test(view.getComputedStyle(container).display);
+}
+
+const FLEX_OR_GRID_DISPLAY = /\b(flex|grid)\b/;
+
 function sharesLineWithPreviousSibling(
   contextNode: Node,
   firstLineRect: DOMRect
@@ -254,8 +290,10 @@ export function sortNodesByStackingOrder(nodes: Array<Node>) {
   positiveZIndex.sort((a, b) => a.zIndex - b.zIndex);
 
   return [
-    ...nonPositioned,
+    // CSS paints negative z-index stacking contexts BEFORE in-flow content (CSS 2.1 Appendix E);
+    // listing them after it put a `z-index: -1` page backdrop on top of the whole design.
     ...negativeZIndex.map((item) => item.node),
+    ...nonPositioned,
     ...positionedAuto,
     ...positiveZIndex.map((item) => item.node),
   ];

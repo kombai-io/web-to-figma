@@ -4,8 +4,12 @@
 
 Convert HTML to editable Figma layers. No plugin needed, just paste.
 
+> **This is Kombai's fork** of [figitdesign/web-to-figma](https://github.com/figitdesign/web-to-figma).
+> It publishes the converter as `@kombai/dom-to-figma`, which Kombai's Copy to Figma depends on.
+> See [Kombai's fork](#kombais-fork) below for how it differs and how to maintain it.
+
 ```ts
-import { createFigmaConverter } from "@figit/dom-to-figma";
+import { createFigmaConverter } from "@kombai/dom-to-figma";
 
 const figma = createFigmaConverter();
 
@@ -31,15 +35,31 @@ Used in production by [Sleek](https://sleek.design) to copy generated designs st
 
 | Package | Version | Description |
 | ------- | ------- | ----------- |
-| [`@figit/dom-to-figma`](./packages/dom-to-figma) | [![npm](https://img.shields.io/npm/v/@figit/dom-to-figma)](https://www.npmjs.com/package/@figit/dom-to-figma) | Convert any DOM tree to a Figma clipboard payload. |
+| [`@kombai/dom-to-figma`](./packages/dom-to-figma) | [![npm](https://img.shields.io/npm/v/@kombai/dom-to-figma)](https://www.npmjs.com/package/@kombai/dom-to-figma) | Convert any DOM tree to a Figma clipboard payload. |
 
 See the [`dom-to-figma` README](./packages/dom-to-figma) for the full API: customizing font/image loaders, multi-frame canvases, and DOM-to-node classification.
 
 ## Install
 
 ```sh
-pnpm add @figit/dom-to-figma
+pnpm add @kombai/dom-to-figma
 ```
+
+## Kombai's fork
+
+- **Base:** upstream `859efea`, the commit that built `@figit/dom-to-figma` 0.2.4. Upstream's
+  history is kept, so `git log upstream/main..main` lists everything the fork adds.
+- **Published:** only `@kombai/dom-to-figma`. `packages/fig-kiwi` is marked private here, and the
+  published converter depends on upstream's `@figit/fig-kiwi` from npm (pnpm swaps `workspace:*`
+  for its version on publish). A change to `packages/fig-kiwi` therefore does not ship until it is
+  published under `@kombai` too.
+- **Releasing:** changesets, as upstream. Add one with `pnpm changeset` in the PR. On `main`, the
+  Release workflow opens a "chore: release packages" PR, and merging it publishes to npm with
+  provenance through npm trusted publishing (no token in the repo).
+- **Syncing upstream:** `git remote add upstream https://github.com/figitdesign/web-to-figma.git`,
+  then `git fetch upstream && git merge upstream/main`. Expect conflicts where the fork renamed
+  `@figit/dom-to-figma` to `@kombai/dom-to-figma`.
+- **Upstreaming:** a fix that is not Kombai-specific should also go to upstream as a PR.
 
 ## Contributing
 

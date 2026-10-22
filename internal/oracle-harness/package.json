@@ -13,7 +13,7 @@
     "test:browser": "ORACLE_BROWSER=1 vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@figit/dom-to-figma": "workspace:*",
+    "@kombai/dom-to-figma": "workspace:*",
     "@figit/fig-kiwi": "workspace:*",
     "pixelmatch": "^6.0.0",
     "playwright": "^1.50.0",

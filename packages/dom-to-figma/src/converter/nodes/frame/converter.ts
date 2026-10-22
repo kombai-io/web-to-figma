@@ -339,6 +339,11 @@ function buildOutlineRing(
   };
 }
 
+/** Sorts before "0" by code unit: a decoration painted below the frame's children. */
+const DECORATION_BELOW_CHILDREN = "/";
+/** Sorts after every digit by code unit: a decoration painted above the frame's children. */
+const DECORATION_ABOVE_CHILDREN = "~";
+
 export function elementToFrameNodeChange(
   element: Element,
   options: Params
@@ -440,13 +445,19 @@ export function elementToFrameNodeChange(
     ? transformOverride.size
     : { x: width, y: height };
 
+  // A `visibility: hidden` element keeps its box (and visible descendants) but
+  // paints nothing of its own: no fill, border, shadow or outline.
+  const paintsSelf =
+    computedStyle.visibility !== "hidden" &&
+    computedStyle.visibility !== "collapse";
+
   // A frame carries a single stroke color, so four different border colors
   // collapse to one. When the sides disagree, decompose the border into a
   // filled trapezoid per side (exact CSS miters) and drop the frame stroke.
   // Skipped for inferred stacks (children would be laid out by the stack) and
   // transformed frames (size differs from the measured rect used for geometry).
   const borderChildren =
-    createGuid && registerBlob && !(inferred || transformOverride)
+    paintsSelf && createGuid && registerBlob && !(inferred || transformOverride)
       ? decomposePerSideBorder({
           computedStyle,
           width,
@@ -599,31 +610,59 @@ export function elementToFrameNodeChange(
     ...inferred?.stack,
   };
 
+  if (!paintsSelf) {
+    nodeChange.fillPaints = [];
+    nodeChange.strokePaints = [];
+    nodeChange.effects = [];
+    textGradient = undefined;
+  }
+
   // Synthetic children the frame's single stroke can't express: a `double`
   // border's second concentric line, and an `outline` standing off outside the
   // box. Both are skipped when no guid allocator is available (e.g. the form
   // converter's frame).
+  //
+  // The converter draws these; the page does not lay them out. In an auto
+  // layout frame they must not take a slot in the stack (an outlined tile's
+  // ring pushed its image down a whole tile), so they are positioned
+  // absolutely. Children are positioned "0", "1", …; CSS paints a border below
+  // the element's content and an outline above it, so "/" sorts the inner line
+  // before every child and "~" sorts the ring after them.
+  const decoration = (
+    child: FigmaNodeChange,
+    position: string
+  ): FigmaNodeChange => ({
+    ...child,
+    parentIndex: { guid, position },
+    ...(inferred !== null && { stackPositioning: "ABSOLUTE" }),
+  });
   const extraChildren: Array<FigmaNodeChange> = [];
-  if (doubleBorder && createGuid) {
+  if (paintsSelf && doubleBorder && createGuid) {
     extraChildren.push(
-      buildDoubleBorderInnerLine(
-        createGuid(),
-        guid,
-        frameSize,
-        borderProperties.cornerRadius,
-        doubleBorder
+      decoration(
+        buildDoubleBorderInnerLine(
+          createGuid(),
+          guid,
+          frameSize,
+          borderProperties.cornerRadius,
+          doubleBorder
+        ),
+        DECORATION_BELOW_CHILDREN
       )
     );
   }
   const outline = parseOutlineFromComputedStyle(computedStyle);
-  if (outline && createGuid) {
+  if (paintsSelf && outline && createGuid) {
     extraChildren.push(
-      buildOutlineRing(
-        createGuid(),
-        guid,
-        frameSize,
-        borderProperties.cornerRadius,
-        outline
+      decoration(
+        buildOutlineRing(
+          createGuid(),
+          guid,
+          frameSize,
+          borderProperties.cornerRadius,
+          outline
+        ),
+        DECORATION_ABOVE_CHILDREN
       )
     );
   }
