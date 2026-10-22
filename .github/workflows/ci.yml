@@ -13,7 +13,8 @@ concurrency:
 jobs:
   check:
     name: Lint, typecheck, build, test
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to Ubuntu 26.04, where Playwright 1.59 cannot install Chromium.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
 
@@ -45,7 +46,8 @@ jobs:
 
   parity:
     name: Tier-0 parity ratchet
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to Ubuntu 26.04, where Playwright 1.59 cannot install Chromium.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
 
