@@ -1,32 +1,37 @@
 name: Release
 
+# Publishes @kombai/dom-to-figma when packages/dom-to-figma/package.json names a version npm does not
+# have yet. To release: bump that version (and add a CHANGELOG entry) in a PR, then merge it.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  release:
-    name: Release
+  publish:
+    name: Publish to npm
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
+      contents: read
+      id-token: write # npm provenance
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup
 
-      - name: Create Release Pull Request or Publish
-        uses: changesets/action@v1
-        with:
-          version: pnpm changeset version
-          publish: pnpm release
-          commit: "chore: release packages"
-          title: "chore: release packages"
+      - name: Publish if the version is new
+        working-directory: packages/dom-to-figma
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@kombai/dom-to-figma@$version" version >/dev/null 2>&1; then
+            echo "@kombai/dom-to-figma@$version is already on npm"
+            exit 0
+          fi
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          pnpm build
+          pnpm publish --access public --no-git-checks

@@ -1,6 +1,6 @@
 {
   "name": "@kombai/dom-to-figma",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "Convert any DOM tree to a Figma clipboard payload, in the browser. Kombai's fork of @figit/dom-to-figma.",
   "license": "MIT",
   "author": "Figit <https://figit.design>",
