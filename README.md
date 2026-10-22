@@ -53,9 +53,9 @@ pnpm add @kombai/dom-to-figma
   published converter depends on upstream's `@figit/fig-kiwi` from npm (pnpm swaps `workspace:*`
   for its version on publish). A change to `packages/fig-kiwi` therefore does not ship until it is
   published under `@kombai` too.
-- **Releasing:** changesets, as upstream. Add one with `pnpm changeset` in the PR. On `main`, the
-  Release workflow opens a "chore: release packages" PR, and merging it publishes to npm with
-  provenance through npm trusted publishing (no token in the repo).
+- **Releasing:** bump `version` in `packages/dom-to-figma/package.json` and add a `CHANGELOG.md`
+  entry in a PR. Merging it to `main` publishes that version to npm (the Release workflow, using the
+  `NPM_TOKEN` repo secret). A version already on npm is skipped.
 - **Syncing upstream:** `git remote add upstream https://github.com/figitdesign/web-to-figma.git`,
   then `git fetch upstream && git merge upstream/main`. Expect conflicts where the fork renamed
   `@figit/dom-to-figma` to `@kombai/dom-to-figma`.
