@@ -1,3 +1,4 @@
+import { formDisplayText } from "../../classify";
 import type { Position } from "../../dom";
 import { getElementSize } from "../../dom";
 import type { FontCache } from "../../font-cache";
@@ -157,7 +158,8 @@ function calculateTextPosition(element: Element): {
 }
 
 /**
- * Converts a form element with placeholder text to Figma nodes
+ * Converts a form field to Figma nodes: its frame, and the text it shows (its
+ * value, a select's chosen label, or else its placeholder).
  */
 export async function elementToFormNodeChange(
   params: FormElementParams
@@ -174,10 +176,11 @@ export async function elementToFormNodeChange(
     createGuid,
   } = params;
 
-  const placeholderText = element.getAttribute("placeholder")?.trim();
-  if (!placeholderText) {
-    throw new Error("Form element has no placeholder text");
+  const display = formDisplayText(element);
+  if (!display) {
+    throw new Error("Form element has no text");
   }
+  const placeholderText = display.text;
 
   const nodeChanges: Array<FigmaNodeChange> = [];
 
@@ -193,7 +196,17 @@ export async function elementToFormNodeChange(
 
   // Create synthetic div for text styling
   const syntheticDiv = createStyledDiv(element, placeholderText);
-  document.body.appendChild(syntheticDiv);
+  if (display.placeholder) {
+    const placeholderColor = (
+      element.ownerDocument.defaultView ?? window
+    ).getComputedStyle(element, "::placeholder").color;
+    if (placeholderColor) {
+      syntheticDiv.style.setProperty("color", placeholderColor);
+    }
+  }
+  // Measured in the field's own document, where its fonts are loaded.
+  const measureBody = element.ownerDocument.body ?? document.body;
+  measureBody.appendChild(syntheticDiv);
 
   try {
     // Calculate text positioning and sizing
@@ -217,7 +230,7 @@ export async function elementToFormNodeChange(
     nodeChanges.push(textNodeChange);
   } finally {
     // Always clean up the synthetic element
-    document.body.removeChild(syntheticDiv);
+    syntheticDiv.remove();
   }
 
   return nodeChanges;

@@ -28,6 +28,35 @@ function stopsOf(paint: FigmaPaint) {
 }
 
 describe("cssBackgroundToFigmaPaints()", () => {
+  describe("layered backgrounds", () => {
+    it("emits one paint per gradient layer, bottom layer first", () => {
+      const paints = cssBackgroundToFigmaPaints(
+        "linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255)), radial-gradient(rgb(0, 255, 0), rgb(0, 0, 0))",
+        BOX
+      );
+      // CSS lists the top layer first; Figma lists it last.
+      expect(paints.map((paint) => paint.type)).toEqual([
+        "GRADIENT_RADIAL",
+        "GRADIENT_LINEAR",
+      ]);
+    });
+
+    it("ignores url() layers, commas inside them included", () => {
+      const paints = cssBackgroundToFigmaPaints(
+        'url("a,b.png"), linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255)), url(c.png)',
+        BOX
+      );
+      expect(paints).toHaveLength(1);
+      // A url after the gradient used to be read as an extra colour stop.
+      expect(stopsOf(paints[0] as FigmaPaint)).toHaveLength(2);
+    });
+
+    it("returns no paints for none or an empty value", () => {
+      expect(cssBackgroundToFigmaPaints("none", BOX)).toEqual([]);
+      expect(cssBackgroundToFigmaPaints("", BOX)).toEqual([]);
+    });
+  });
+
   it("returns nothing for empty or `none` backgrounds", () => {
     expect(cssBackgroundToFigmaPaints("")).toEqual([]);
     expect(cssBackgroundToFigmaPaints("none")).toEqual([]);
