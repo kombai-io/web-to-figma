@@ -1,17 +1,17 @@
 {
-  "name": "@figit/dom-to-figma",
+  "name": "@kombai/dom-to-figma",
   "version": "0.2.4",
-  "description": "Convert any DOM tree to a Figma clipboard payload, in the browser.",
+  "description": "Convert any DOM tree to a Figma clipboard payload, in the browser. Kombai's fork of @figit/dom-to-figma.",
   "license": "MIT",
   "author": "Figit <https://figit.design>",
-  "homepage": "https://github.com/figitdesign/web-to-figma#readme",
+  "homepage": "https://github.com/kombai-io/web-to-figma#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/figitdesign/web-to-figma.git",
+    "url": "git+https://github.com/kombai-io/web-to-figma.git",
     "directory": "packages/dom-to-figma"
   },
   "bugs": {
-    "url": "https://github.com/figitdesign/web-to-figma/issues"
+    "url": "https://github.com/kombai-io/web-to-figma/issues"
   },
   "keywords": [
     "figma",

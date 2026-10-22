@@ -1,8 +1,8 @@
 import { html } from "@codemirror/lang-html";
-import type { ConvertResult } from "@figit/dom-to-figma";
 import { Button } from "@figit/ui/components/button";
 import { Input } from "@figit/ui/components/input";
 import { Spinner } from "@figit/ui/components/spinner";
+import type { ConvertResult } from "@kombai/dom-to-figma";
 import CodeMirror from "@uiw/react-codemirror";
 import {
   useCallback,

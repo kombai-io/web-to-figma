@@ -1,6 +1,6 @@
 # playground
 
-Interactive sandbox for `@figit/dom-to-figma`. Browse a corpus of unit and integration scenes, edit the HTML, watch the iframe preview update, inspect the Figma payload tree, and copy to Figma in one click.
+Interactive sandbox for `@kombai/dom-to-figma`. Browse a corpus of unit and integration scenes, edit the HTML, watch the iframe preview update, inspect the Figma payload tree, and copy to Figma in one click.
 
 ## Stack
 
@@ -16,7 +16,7 @@ Interactive sandbox for `@figit/dom-to-figma`. Browse a corpus of unit and integ
 pnpm --filter playground dev
 ```
 
-The playground consumes `@figit/dom-to-figma` from source via the workspace, so no separate build step is needed.
+The playground consumes `@kombai/dom-to-figma` from source via the workspace, so no separate build step is needed.
 
 ## Layout
 

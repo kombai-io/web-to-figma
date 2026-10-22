@@ -1,6 +1,6 @@
 {
   "name": "extension",
-  "description": "Copy any website to Figma — browser extension built on @figit/dom-to-figma.",
+  "description": "Copy any website to Figma — browser extension built on @kombai/dom-to-figma.",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",
-    "@figit/dom-to-figma": "workspace:*",
+    "@kombai/dom-to-figma": "workspace:*",
     "@figit/ui": "workspace:*",
     "@webext-core/messaging": "^2.3.0",
     "react": "^19.2.4",

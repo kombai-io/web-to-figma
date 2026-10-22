@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import process from "node:process";
-import type { ConvertTrace } from "@figit/dom-to-figma";
+import type { ConvertTrace } from "@kombai/dom-to-figma";
 import type { Browser } from "playwright";
 import { chromium } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

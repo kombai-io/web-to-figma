@@ -15,7 +15,7 @@ const BUNDLE_EVERYTHING = /./;
 let cached: string | undefined;
 
 /**
- * Build the converter fresh from `@figit/dom-to-figma`'s `src/` as a
+ * Build the converter fresh from `@kombai/dom-to-figma`'s `src/` as a
  * self-contained IIFE that exposes `window.FigitDomToFigma`, exactly as
  * oracle-outbox.ts does. Cached per process so a batch pays the build once.
  * Always tests source, never the published package.

@@ -192,8 +192,10 @@ describe("wrapped text", () => {
   });
 
   it("keeps bare text in a flex row as one text layer", async () => {
+    // The icon spans the text's first line, which used to read as the text
+    // continuing the icon's line.
     const { nodes } = await convert(
-      `<div style="display:flex;align-items:center;gap:8px;width:140px">
+      `<div style="display:flex;align-items:flex-start;gap:8px;width:140px">
         <span style="flex:0 0 24px"><i style="display:block;width:24px;height:24px;background:#ccc"></i></span>Download the printable files now
       </div>`
     );
@@ -221,8 +223,8 @@ describe("wrapped text", () => {
       (change): change is FigmaTextNodeChange =>
         change.type === "TEXT" && change.characters.trim() === "inside"
     );
-    expect(inside?.size.x).toBeGreaterThan(0);
-    expect(inside?.size.y).toBeGreaterThan(0);
+    expect(inside?.size?.x).toBeGreaterThan(0);
+    expect(inside?.size?.y).toBeGreaterThan(0);
   });
 });
 

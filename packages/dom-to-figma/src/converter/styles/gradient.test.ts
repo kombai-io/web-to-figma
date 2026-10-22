@@ -47,8 +47,11 @@ describe("cssBackgroundToFigmaPaints()", () => {
         BOX
       );
       expect(paints).toHaveLength(1);
-      // A url after the gradient used to be read as an extra colour stop.
-      expect(stopsOf(paints[0] as FigmaPaint)).toHaveLength(2);
+      // A url after the gradient used to count as a stop position: the
+      // gradient ended at 50% instead of 100%.
+      expect(
+        stopsOf(paints[0] as FigmaPaint).map((stop) => stop.position)
+      ).toEqual([0, 1]);
     });
 
     it("returns no paints for none or an empty value", () => {

@@ -1,7 +1,7 @@
 # @figit/oracle-harness
 
 Private tooling for the visual-parity pipeline: measure how faithfully
-`@figit/dom-to-figma` reproduces a DOM inside Figma, and drive locally-run fixes.
+`@kombai/dom-to-figma` reproduces a DOM inside Figma, and drive locally-run fixes.
 See [`docs/visual-parity-pipeline.prd.md`](../../docs/visual-parity-pipeline.prd.md)
 for the full design and workstreams.
 

@@ -1,4 +1,4 @@
-import type { ConvertTrace } from "@figit/dom-to-figma";
+import type { ConvertTrace } from "@kombai/dom-to-figma";
 import type { Finding } from "./findings";
 import { severityFromDelta } from "./findings";
 import type { GroundTruthElement } from "./ground-truth";
