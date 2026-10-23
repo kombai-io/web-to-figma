@@ -6,6 +6,10 @@ export type FigmaTextAlignHorizontal =
 
 export type FigmaTextDecoration = "NONE" | "UNDERLINE" | "STRIKETHROUGH";
 
+export type FigmaTextDecorationStyle = "SOLID" | "DOTTED" | "WAVY";
+
+export type FigmaTextTruncation = "DISABLED" | "ENDING";
+
 export type FigmaTextCase =
   | "ORIGINAL"
   | "UPPER"
@@ -59,4 +63,8 @@ export type FigmaDerivedTextData = {
   truncationStartIndex?: number;
   truncatedHeight?: number;
   logicalIndexToCharacterOffsetMap?: Array<number>;
+  decorations?: Array<{
+    rects: Array<{ x: number; y: number; w: number; h: number }>;
+    styleID: number;
+  }>;
 };

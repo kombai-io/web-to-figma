@@ -284,3 +284,105 @@ describe("text-shadow → TEXT node DROP_SHADOW effect", () => {
     expect(textChange.effects ?? []).toHaveLength(0);
   });
 });
+
+describe("text decoration and truncation", () => {
+  const convertText = async (style: string, text: string) => {
+    const element = mountElement(
+      `<div style="width:${FRAME_WIDTH}px;height:${FRAME_HEIGHT}px;font-family:'${TEST_FONT_FAMILY}',sans-serif;font-size:20px;color:rgb(0,0,0);${style}">${text}</div>`
+    );
+
+    const figma = createFigmaConverter({ fontLoader: createTestFontLoader() });
+    const result = await figma.convert({
+      element,
+      width: FRAME_WIDTH,
+      height: FRAME_HEIGHT,
+    });
+
+    const textChange = result.document.nodeChanges.find(
+      (change) => change.type === "TEXT"
+    );
+    if (textChange?.type !== "TEXT") {
+      throw new Error("expected TEXT node");
+    }
+    return textChange;
+  };
+
+  it("maps line-through to a strikethrough drawn above the baseline", async () => {
+    const textChange = await convertText(
+      "text-decoration:line-through",
+      "Old price"
+    );
+
+    expect(textChange.textDecoration).toBe("STRIKETHROUGH");
+    const baselineY = textChange.derivedTextData?.glyphs?.[0]?.position.y ?? 0;
+    const line = textChange.derivedTextData?.decorations?.[0]?.rects[0];
+    expect(line).toBeDefined();
+    expect(line?.y).toBeLessThan(baselineY);
+    expect(line?.y).toBeGreaterThan(baselineY - 20);
+  });
+
+  it("keeps the strikethrough when underline and line-through are combined", async () => {
+    const textChange = await convertText(
+      "text-decoration:underline line-through",
+      "Both"
+    );
+
+    expect(textChange.textDecoration).toBe("STRIKETHROUGH");
+  });
+
+  it("carries the decoration's style, colour and thickness", async () => {
+    const textChange = await convertText(
+      "text-decoration:underline wavy rgb(255,0,0) 3px",
+      "Wavy"
+    );
+
+    expect(textChange.textDecoration).toBe("UNDERLINE");
+    expect(textChange.textDecorationStyle).toBe("WAVY");
+    const paint = textChange.textDecorationFillPaints?.[0];
+    expect(paint?.type).toBe("SOLID");
+    if (paint?.type === "SOLID") {
+      expect(paint.color).toEqual({ r: 1, g: 0, b: 0, a: 1 });
+    }
+    expect(textChange.textDecorationThickness).toEqual({
+      value: 3,
+      units: "PIXELS",
+    });
+  });
+
+  it("emits no decoration colour when the line takes the text's colour", async () => {
+    const textChange = await convertText("text-decoration:underline", "Link");
+
+    expect(textChange.textDecoration).toBe("UNDERLINE");
+    expect(textChange.textDecorationFillPaints).toBeUndefined();
+    expect(textChange.textDecorationStyle).toBeUndefined();
+  });
+
+  it("truncates single-line text-overflow: ellipsis to one line", async () => {
+    const textChange = await convertText(
+      "white-space:nowrap;overflow:hidden;text-overflow:ellipsis",
+      "A sentence far too long to fit in the box it is given here"
+    );
+
+    expect(textChange.textTruncation).toBe("ENDING");
+    expect(textChange.maxLines).toBe(1);
+  });
+
+  it("truncates -webkit-line-clamp text at the clamped line count", async () => {
+    const textChange = await convertText(
+      "display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden",
+      "A sentence long enough to wrap onto several lines in the box, and then some more words after that"
+    );
+
+    expect(textChange.textTruncation).toBe("ENDING");
+    expect(textChange.maxLines).toBe(2);
+  });
+
+  it("does not truncate text whose overflow is visible", async () => {
+    const textChange = await convertText(
+      "white-space:nowrap;text-overflow:ellipsis",
+      "A sentence far too long to fit in the box it is given here"
+    );
+
+    expect(textChange.textTruncation).toBeUndefined();
+  });
+});

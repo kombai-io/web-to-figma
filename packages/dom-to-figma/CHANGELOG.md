@@ -1,5 +1,11 @@
 # @kombai/dom-to-figma
 
+## 0.3.2
+
+- `line-through` (and `<del>`, `<s>`) exports as a Figma strikethrough instead of no decoration. When `underline line-through` are combined, the strikethrough is kept, since a Figma text layer draws one decoration.
+- A decoration keeps its `dotted` or `wavy` style, its colour when it differs from the text's, and a thickness set as a length.
+- Text cut short with an ellipsis exports with Figma's ending truncation: `-webkit-line-clamp` at its line count, and single-line `text-overflow: ellipsis` at one line. Only the text's own element is checked.
+
 ## 0.3.1
 
 - Children of a `flex-wrap` or grid container laid out on a single row export as a plain horizontal auto layout instead of a wrapping one. A row that fills its frame exactly, such as a `1.2fr 1fr` grid, can measure a hair wider than the frame when the page is zoomed, and Figma wrapped its last child onto a second line on paste.

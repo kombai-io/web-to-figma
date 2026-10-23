@@ -12,10 +12,12 @@ import type {
   FigmaTextAlignHorizontal,
   FigmaTextCase,
   FigmaTextDecoration,
+  FigmaTextDecorationStyle,
   FigmaTextNodeChange,
 } from "../../types";
 import { buildBaselines } from "./builders/baselines";
 import { buildCharacterOffsets } from "./builders/character-offsets";
+import type { DecorationOptions } from "./builders/decorations";
 import { processTextDecorations } from "./builders/decorations";
 import { parseTextProperties } from "./primitives/css/parser";
 import { processGlyphs } from "./primitives/glyph/processor";
@@ -48,10 +50,93 @@ function getWidthBuffer(fontWeight: number, fontSize: number) {
   return fontSize > 60 ? fontWeightBuffer + 1 : fontWeightBuffer;
 }
 
-const cssToFigmaTextDecorationMap: Record<string, FigmaTextDecoration> = {
-  none: "NONE",
-  underline: "UNDERLINE",
+// `text-decoration-line` can list several lines (`underline line-through`),
+// but a Figma text layer draws one. Strikethrough wins: losing it changes what
+// the text means (a struck-out price), losing an underline does not.
+function cssToFigmaTextDecoration(line: string): FigmaTextDecoration {
+  const lines = line.split(/\s+/);
+  if (lines.includes("line-through")) {
+    return "STRIKETHROUGH";
+  }
+  if (lines.includes("underline")) {
+    return "UNDERLINE";
+  }
+  return "NONE";
+}
+
+const figmaToDecorationTypeMap: Record<
+  FigmaTextDecoration,
+  DecorationOptions["decorationType"]
+> = {
+  NONE: "none",
+  UNDERLINE: "underline",
+  STRIKETHROUGH: "line-through",
 };
+
+// Figma draws decorations solid, dotted or wavy. CSS `double` and `dashed`
+// have no match and keep Figma's default solid line.
+const cssToFigmaTextDecorationStyleMap: Record<
+  string,
+  FigmaTextDecorationStyle
+> = {
+  dotted: "DOTTED",
+  wavy: "WAVY",
+};
+
+// Style, colour and thickness of the decoration, read from the element that
+// declared it. Its computed colour is `currentcolor` resolved there, so it is
+// only emitted when it differs from the text's own colour.
+function textDecorationProperties(
+  decorationStyle: CSSStyleDeclaration,
+  textColor: string
+) {
+  const style =
+    cssToFigmaTextDecorationStyleMap[decorationStyle.textDecorationStyle];
+  const color =
+    decorationStyle.textDecorationColor === textColor
+      ? null
+      : cssColorToFigmaColor(decorationStyle.textDecorationColor);
+  const thickness = decorationStyle.textDecorationThickness.endsWith("px")
+    ? Number.parseFloat(decorationStyle.textDecorationThickness)
+    : undefined;
+
+  return {
+    ...(style && { textDecorationStyle: style }),
+    ...(color && {
+      textDecorationFillPaints: [createSolidPaint(color.color, color.opacity)],
+    }),
+    ...(thickness !== undefined && {
+      textDecorationThickness: { value: thickness, units: "PIXELS" },
+    }),
+  };
+}
+
+// The number of lines the browser cut the text short at with an ellipsis:
+// `-webkit-line-clamp` in a vertical `-webkit-box`, or `text-overflow:
+// ellipsis` on text it laid out on one line. Only the text's own element is
+// checked. The box is recognised by its orient, not its display: Chromium
+// computes a clamped `-webkit-box` as `flow-root`.
+function getTruncatedMaxLines(
+  style: CSSStyleDeclaration,
+  isSingleLine: boolean
+): number | undefined {
+  if (style.overflowX === "visible") {
+    return;
+  }
+  const lineClamp = Number.parseInt(
+    style.getPropertyValue("-webkit-line-clamp"),
+    10
+  );
+  if (
+    lineClamp > 0 &&
+    style.getPropertyValue("-webkit-box-orient") === "vertical"
+  ) {
+    return lineClamp;
+  }
+  if (style.textOverflow === "ellipsis" && isSingleLine) {
+    return 1;
+  }
+}
 
 const cssToFigmaTextCaseMap: Record<string, FigmaTextCase> = {
   none: "ORIGINAL",
@@ -185,25 +270,26 @@ export async function nodeToTextNodeChange(
   }
 
   // Check for text decoration on current element and parent elements
-  let textDecoration = computedStyle.textDecorationLine || "none";
+  let decorationStyle = computedStyle;
 
   // If no decoration found on current element, recursively check parent elements
-  if (textDecoration === "none") {
+  if ((decorationStyle.textDecorationLine || "none") === "none") {
     let parentElement = element.parentElement;
     while (parentElement) {
       const parentStyle = window.getComputedStyle(parentElement);
       const parentDecoration = parentStyle.textDecorationLine || "none";
 
       if (parentDecoration !== "none") {
-        textDecoration = parentDecoration;
+        decorationStyle = parentStyle;
         break;
       }
       parentElement = parentElement.parentElement;
     }
   }
 
-  const figmaTextDecoration =
-    cssToFigmaTextDecorationMap[textDecoration] ?? "NONE";
+  const figmaTextDecoration = cssToFigmaTextDecoration(
+    decorationStyle.textDecorationLine || "none"
+  );
 
   // Parse text transform (text case)
   const textTransform = computedStyle.textTransform || "none";
@@ -298,15 +384,21 @@ export async function nodeToTextNodeChange(
 
   const characterOffsets = buildCharacterOffsets(layout);
 
-  // Process text decorations (underlines, etc.) - implement strikethrough later
-  const decorationType =
-    figmaTextDecoration === "UNDERLINE" ? "underline" : "none";
+  // Process text decorations (underlines and strikethroughs)
+  const decorationType = figmaToDecorationTypeMap[figmaTextDecoration];
+  const decorationProperties =
+    figmaTextDecoration === "NONE"
+      ? {}
+      : textDecorationProperties(decorationStyle, computedStyle.color);
 
   const decorations = processTextDecorations(layout, loadedFont.font, text, {
     decorationType,
     fontSize: styles.fontSize,
+    thickness: decorationProperties.textDecorationThickness?.value,
     respectGlyphDescent: true,
   });
+
+  const maxLines = getTruncatedMaxLines(computedStyle, isSingleLine);
 
   // Build textData and derivedTextData
   const result = {
@@ -519,6 +611,13 @@ export async function nodeToTextNodeChange(
     /* Text Decoration */
     ...(figmaTextDecoration !== "NONE" && {
       textDecoration: figmaTextDecoration,
+      ...decorationProperties,
+    }),
+
+    /* Truncation */
+    ...(maxLines !== undefined && {
+      textTruncation: "ENDING" as const,
+      maxLines,
     }),
 
     /* Text Case */
