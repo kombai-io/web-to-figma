@@ -388,13 +388,13 @@ export async function nodeToTextNodeChange(
   const decorationType = figmaToDecorationTypeMap[figmaTextDecoration];
   const decorationProperties =
     figmaTextDecoration === "NONE"
-      ? {}
+      ? undefined
       : textDecorationProperties(decorationStyle, computedStyle.color);
 
   const decorations = processTextDecorations(layout, loadedFont.font, text, {
     decorationType,
     fontSize: styles.fontSize,
-    thickness: decorationProperties.textDecorationThickness?.value,
+    thickness: decorationProperties?.textDecorationThickness?.value,
     respectGlyphDescent: true,
   });
 
