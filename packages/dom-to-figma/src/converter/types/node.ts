@@ -8,6 +8,8 @@ import type {
   FigmaTextCase,
   FigmaTextData,
   FigmaTextDecoration,
+  FigmaTextDecorationStyle,
+  FigmaTextTruncation,
 } from "./text";
 
 // Base properties common to all nodes
@@ -77,6 +79,14 @@ export type FigmaTextNodeChange = FigmaBaseNodeChange & {
   textAutoResize?: string;
   detachOpticalSizeFromFontSize?: boolean;
   textDecoration?: FigmaTextDecoration;
+  textDecorationStyle?: FigmaTextDecorationStyle;
+  textDecorationFillPaints?: Array<FigmaPaint>;
+  textDecorationThickness?: {
+    value: number;
+    units: string;
+  };
+  textTruncation?: FigmaTextTruncation;
+  maxLines?: number;
   textCase?: FigmaTextCase;
   strokeWeight?: number;
   strokeAlign?: string;

@@ -42,6 +42,8 @@ export type DecorationOptions = {
   decorationType: "none" | "underline" | "line-through" | "overline";
   /** Font size in pixels */
   fontSize: number;
+  /** CSS `text-decoration-thickness` in pixels, when set as a length */
+  thickness?: number;
   /** Whether to adjust for glyph descent */
   respectGlyphDescent: boolean;
 };
@@ -80,38 +82,36 @@ export function processTextDecorations(
 
   const decorations: Array<TextDecoration> = [];
 
-  if (options.decorationType === "underline") {
-    const underlineDecoration = createUnderlineDecoration(
-      layout,
-      font,
-      text,
-      options
-    );
-    if (underlineDecoration) {
-      decorations.push(underlineDecoration);
+  if (
+    options.decorationType === "underline" ||
+    options.decorationType === "line-through"
+  ) {
+    const lineDecoration = createLineDecoration(layout, font, text, options);
+    if (lineDecoration) {
+      decorations.push(lineDecoration);
     }
   }
 
-  // Future: Add support for line-through, overline, etc.
+  // Figma has no overline, so it is never drawn.
 
   return decorations;
 }
 
 /**
- * Create underline decoration for text layout
+ * Create an underline or strikethrough decoration for text layout
  *
- * Generates underline rectangles based on glyph positions and font metrics.
+ * Generates line rectangles based on glyph positions and font metrics.
  * Handles multi-line text with proper positioning and spacing.
  *
  * @param layout - Text layout with glyph positions
  * @param font - OpenType font for metrics
  * @param text - Original text string
  * @param options - Decoration options
- * @returns Underline decoration object or null if not applicable
+ * @returns Decoration object or null if not applicable
  *
  * @internal
  */
-function createUnderlineDecoration(
+function createLineDecoration(
   layout: ProcessedTextLayout,
   font: OpenTypeFont,
   text: string,
@@ -121,19 +121,24 @@ function createUnderlineDecoration(
     return null;
   }
 
+  const lineThickness =
+    options.thickness ?? calculateUnderlineThickness(options.fontSize);
   // We need line height for proper positioning - get it from layout options or estimate
   // const lineHeight = layout.options.lineHeight ?? options.fontSize * 1.2;
-  const underlineY = calculateUnderlinePosition(
-    layout.metrics,
-    options.fontSize
-  );
-  const underlineThickness = calculateUnderlineThickness(options.fontSize);
+  const lineY =
+    options.decorationType === "line-through"
+      ? calculateStrikethroughPosition(
+          layout.metrics,
+          options.fontSize,
+          lineThickness
+        )
+      : calculateUnderlinePosition(layout.metrics, options.fontSize);
 
   // Always use multi-line approach as it's more general and handles single lines too
   const rects = createMultiLineUnderlineRects(
     layout,
-    underlineY,
-    underlineThickness,
+    lineY,
+    lineThickness,
     font,
     text,
     options
@@ -171,6 +176,27 @@ function calculateUnderlinePosition(
   const underlineOffset = fontSize * 0.086; // ~1.21px for 14px font (matches ground truth)
 
   return underlineOffset;
+}
+
+/**
+ * Calculate strikethrough Y position: the line's top edge, placed so the
+ * line is centred on half the x-height above the baseline.
+ *
+ * @param metrics - Font metrics
+ * @param fontSize - Font size in pixels
+ * @param thickness - Line thickness in pixels
+ * @returns Y offset from the baseline in pixels (negative is above)
+ *
+ * @internal
+ */
+function calculateStrikethroughPosition(
+  metrics: FontMetrics,
+  fontSize: number,
+  thickness: number
+): number {
+  const xHeight = (metrics.xHeight / metrics.unitsPerEm) * fontSize;
+
+  return -xHeight / 2 - thickness / 2;
 }
 
 /**
