@@ -1,5 +1,10 @@
 # @kombai/dom-to-figma
 
+## 0.3.1
+
+- Children of a `flex-wrap` or grid container laid out on a single row export as a plain horizontal auto layout instead of a wrapping one. A row that fills its frame exactly, such as a `1.2fr 1fr` grid, can measure a hair wider than the frame when the page is zoomed, and Figma wrapped its last child onto a second line on paste.
+- A wrapped stack is emitted only when Figma's row breaking, checked with no overflow allowance on the values the stack is pasted with, reproduces the browser's rows; otherwise the container keeps absolute positions.
+
 ## 0.3.0
 
 First release as `@kombai/dom-to-figma`, Kombai's fork of `@figit/dom-to-figma` 0.2.4.

@@ -303,7 +303,9 @@ function inferFlexStack(input: StackInferenceInput): StackInference | null {
  * same greedy packing). Figma re-flows wrapped stacks with its own greedy
  * row-breaking on paste, so conversion requires that a simulation of that
  * packing reproduces the browser's exact row assignments and positions —
- * otherwise the container falls back to absolute positioning.
+ * otherwise the container falls back to absolute positioning. Children the
+ * browser laid out on one row become a plain HORIZONTAL stack, which Figma
+ * never re-flows.
  */
 function inferWrapStack(
   input: StackInferenceInput,
@@ -379,17 +381,24 @@ function inferWrapStack(
     return null;
   }
 
+  // One row needs no wrapping. A row that fills its frame exactly (a
+  // `1.2fr 1fr` grid) can measure a hair wider than the frame — sub-pixel
+  // snapping under page zoom — and Figma would wrap its last child.
+  const wraps = rows.length > 1;
+
   // Simulate Figma's greedy packing; every child must land exactly where the
-  // browser put it.
-  const rightLimit = parentSize.width - padRight;
-  let x = padLeft;
+  // browser put it. Figma breaks a row at any overflow, so the break test has
+  // no tolerance and uses the float32 values the stack is pasted with.
+  const f = Math.fround;
+  const rightLimit = f(parentSize.width) - f(round2(padRight));
+  let x = f(round2(padLeft));
   let y = padTop;
   let simRowHeight = 0;
   let rowStart = true;
   for (const rect of childRects) {
-    if (!rowStart && x + rect.width - rightLimit > GEOMETRY_TOLERANCE) {
+    if (wraps && !rowStart && x + f(rect.width) > rightLimit) {
       y += simRowHeight + counterSpacing;
-      x = padLeft;
+      x = f(round2(padLeft));
       simRowHeight = 0;
     }
     if (
@@ -398,7 +407,7 @@ function inferWrapStack(
     ) {
       return null;
     }
-    x += rect.width + spacing;
+    x += f(rect.width) + f(spacing);
     simRowHeight = Math.max(simRowHeight, rect.height);
     rowStart = false;
   }
@@ -414,8 +423,7 @@ function inferWrapStack(
     stackVerticalPadding: round2(padTop),
     stackPaddingRight: round2(padRight),
     stackPaddingBottom: round2(padBottom),
-    stackWrap: "WRAP",
-    stackCounterSpacing: counterSpacing,
+    ...(wraps && { stackWrap: "WRAP", stackCounterSpacing: counterSpacing }),
   };
 
   // Counter-axis hug: rows content height equals the frame height.
