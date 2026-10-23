@@ -19,7 +19,8 @@ afterEach(() => {
 
 const convertScene = async (
   html: string,
-  layout: ConverterLayout = "auto"
+  layout: ConverterLayout = "auto",
+  prepare?: (element: HTMLElement) => void
 ): Promise<ReadonlyArray<FigmaNodeChange>> => {
   const wrapper = document.createElement("div");
   // Sized larger than any scene so the legacy fill heuristics (which fire
@@ -30,6 +31,7 @@ const convertScene = async (
   wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
   const element = wrapper.firstElementChild as HTMLElement;
+  prepare?.(element);
 
   const figma = createFigmaConverter({
     layout,
@@ -572,6 +574,55 @@ describe("wrap, reverse, and grid", () => {
       stackMode: "VERTICAL",
       stackSpacing: 14,
     });
+  });
+
+  // Measures `element` a hair wider, as layout snapping under a browser zoom
+  // does for a row that fills its frame exactly.
+  const widen = (element: Element, by: number) => {
+    const measure = element.getBoundingClientRect.bind(element);
+    element.getBoundingClientRect = () => {
+      const rect = measure();
+      return new DOMRect(rect.x, rect.y, rect.width + by, rect.height);
+    };
+  };
+  const FILLED_ROWS = (count: number) =>
+    `<div style="width:300px;height:${count * 70 - 10}px;display:grid;grid-template-columns:1.2fr 1fr;gap:10px 16px">
+      ${'<div style="height:60px"></div>'.repeat(count * 2)}
+    </div>`;
+
+  it("keeps a grid that fills one row as a plain row, even a hair over", async () => {
+    // Figma wraps a WRAP stack at any overflow: a single row emitted as one
+    // would paste with its last child on a second line.
+    const changes = await convertScene(FILLED_ROWS(1), "auto", (element) =>
+      widen(element.firstElementChild as Element, 0.004)
+    );
+
+    const container = byLocalId(changes, CONTAINER_LOCAL_ID);
+    expect(container).toMatchObject({
+      stackMode: "HORIZONTAL",
+      stackSpacing: 16,
+    });
+    expect(container?.stackWrap).toBeUndefined();
+  });
+
+  it("keeps an exactly filled multi-row grid wrapped", async () => {
+    const changes = await convertScene(FILLED_ROWS(2));
+
+    expect(byLocalId(changes, CONTAINER_LOCAL_ID)).toMatchObject({
+      stackMode: "HORIZONTAL",
+      stackWrap: "WRAP",
+      stackSpacing: 16,
+      stackCounterSpacing: 10,
+    });
+  });
+
+  it("bails on wrap when a row overflows its frame by a hair", async () => {
+    // Figma would break the first row early, so its re-flow would not match.
+    const changes = await convertScene(FILLED_ROWS(2), "auto", (element) =>
+      widen(element.firstElementChild as Element, 0.004)
+    );
+
+    expect(byLocalId(changes, CONTAINER_LOCAL_ID)?.stackMode).toBe("NONE");
   });
 });
 
